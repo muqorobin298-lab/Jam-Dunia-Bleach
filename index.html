@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jam Dunia Bleach | Robin</title>
+  <meta name="description" content="Jam dunia bertema Bleach. Lihat waktu di banyak kota sekaligus, lengkap dengan selisih jam dan perencana pertemuan.">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    html { overflow-x: hidden; background: #3b1d5e; }
+    :root { --accent: #ff6a00; --spark: #ffcf8a; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', Arial, sans-serif; min-height: 100vh;
+      background: #c2410c;
+      background: linear-gradient(to top,#ff7b3d,#c2410c 40%,#3b1d5e 100%) fixed;
+      color: #f5f5f5; overflow-x: hidden;
+    }
+    button, input, select { font-family: inherit; color: inherit; }
+
+    /* ===== LATAR ANIME ===== */
+    #scene { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; }
+    .layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+    .layer.aktif { opacity: 1; }
+    .kanji { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 45vw; font-weight: 900; color: #fff; opacity: 0.06; white-space: nowrap; }
+    .orb { position: absolute; top: 9%; right: 10%; width: 22vw; height: 22vw; max-width: 260px; max-height: 260px; min-width: 120px; min-height: 120px; border-radius: 50%; }
+    .city { position: absolute; bottom: 0; left: 0; width: 100%; height: 36vh; }
+    #sparks { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .spark { position: absolute; bottom: -10px; border-radius: 50%; background: var(--spark); box-shadow: 0 0 8px var(--spark); opacity: 0; animation: naik linear infinite; }
+    @keyframes naik {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: 0.9; }
+      100% { transform: translateY(-105vh) translateX(40px); opacity: 0; }
+    }
+
+    /* ===== HALAMAN ===== */
+    .wrap { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: 30px 18px 24px; }
+    .btn {
+      font-family: 'Anton', Impact, sans-serif; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none;
+      cursor: pointer; border: 3px solid #f5f5f5; background: rgba(0,0,0,0.4); color: #f5f5f5; padding: 9px 16px; display: inline-block;
+      transition: background 0.2s, color 0.2s, border-color 1s; text-align: center;
+    }
+    .btn:hover { background: #f5f5f5; color: #000; }
+    .btn.on, .btn.main { background: var(--accent); border-color: var(--accent); color: #000; }
+    .btn.main:hover { background: #fff; border-color: #fff; }
+    .kembali { margin-bottom: 14px; }
+    .lokasi { font-family: 'Anton', Impact, sans-serif; letter-spacing: 3px; font-size: 14px; color: var(--accent); text-transform: uppercase; transition: color 1s; min-height: 20px; }
+    h1 {
+      font-family: 'Anton', Impact, sans-serif; font-size: clamp(46px, 10vw, 100px); line-height: 0.95;
+      text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); margin: 4px 0 10px;
+    }
+    h1 span { color: var(--accent); transition: color 1s; }
+    .bio { max-width: 620px; line-height: 1.7; margin-bottom: 18px; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+    .kartu-besar { background: rgba(8,8,18,0.86); border-top: 5px solid var(--accent); padding: 16px; transition: border-color 1s; }
+    .lbl { font-size: 11px; letter-spacing: 3px; opacity: 0.7; text-transform: uppercase; margin-bottom: 8px; }
+    h2 { font-family: 'Anton', Impact, sans-serif; font-size: 22px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+
+    /* ===== KOTA UTAMA ===== */
+    .utama { display: flex; align-items: center; gap: 24px; margin-bottom: 14px; }
+    .utama .analog { width: 210px; height: 210px; flex: none; }
+    .utama .isi { flex: 1; min-width: 0; }
+    .utama .kota { font-family: 'Anton', Impact, sans-serif; font-size: 28px; letter-spacing: 3px; text-transform: uppercase; }
+    .utama .kota small { font-size: 13px; letter-spacing: 3px; color: var(--accent); margin-left: 8px; transition: color 1s; }
+    .utama .digit { font-family: 'Anton', Impact, sans-serif; font-size: clamp(54px, 11vw, 112px); line-height: 1; letter-spacing: 2px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); font-variant-numeric: tabular-nums; }
+    .utama .digit small { font-size: 0.32em; letter-spacing: 2px; margin-left: 8px; opacity: 0.85; }
+    .utama .tgl { font-size: 16px; opacity: 0.9; margin: 4px 0 10px; }
+    .tag { display: inline-block; font-size: 12px; letter-spacing: 1px; padding: 5px 10px; background: rgba(255,255,255,0.12); margin: 0 6px 6px 0; }
+    .tag.akt { background: var(--accent); color: #000; font-weight: 600; transition: background 1s; }
+
+    /* ===== KONTROL ===== */
+    .kontrol { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .kontrol .grup { display: flex; gap: 6px; align-items: center; }
+    .kontrol select, .kontrol input[type=time] { padding: 9px 10px; font-size: 14px; background: rgba(8,8,18,0.86); border: 2px solid rgba(255,255,255,0.35); outline: none; min-width: 0; }
+    .kontrol select:focus, .kontrol input:focus { border-color: var(--accent); }
+    .kontrol select option { color: #000; }
+    .kontrol select { max-width: 200px; }
+
+    /* ===== KARTU KOTA ===== */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .kc { position: relative; text-align: left; cursor: pointer; background: rgba(8,8,18,0.86); border: 2px solid transparent; border-left: 6px solid var(--kw, #fff); padding: 12px; display: flex; gap: 10px; align-items: center; transition: transform 0.15s, background 0.15s, border-color 0.15s; }
+    .kc:hover { transform: translateY(-3px); background: rgba(20,20,36,0.95); }
+    .kc.pilih { border-color: var(--accent); background: rgba(24,24,44,0.96); }
+    .kc .analog { width: 74px; height: 74px; flex: none; }
+    .kc .nm { font-family: 'Anton', Impact, sans-serif; font-size: 17px; letter-spacing: 2px; text-transform: uppercase; line-height: 1.1; }
+    .kc .jm { font-family: 'Anton', Impact, sans-serif; font-size: 28px; letter-spacing: 1px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .kc .jm small { font-size: 12px; margin-left: 4px; opacity: 0.8; letter-spacing: 1px; }
+    .kc .ket { font-size: 12px; opacity: 0.8; line-height: 1.5; }
+    .kc .x { position: absolute; top: 4px; right: 4px; background: none; border: none; cursor: pointer; opacity: 0.45; font-size: 14px; padding: 4px 6px; }
+    .kc .x:hover { opacity: 1; color: #ff9a9a; }
+    .kc .tm { position: absolute; right: 10px; bottom: 8px; font-size: 16px; }
+
+    /* ===== JAM ANALOG (SVG) ===== */
+    .analog { display: block; }
+    .analog .muka { fill: rgba(0,0,0,0.45); stroke: rgba(255,255,255,0.6); stroke-width: 2.5; }
+    .analog .tik { stroke: rgba(255,255,255,0.7); stroke-width: 1.5; }
+    .analog .tik.besar { stroke-width: 3; stroke: #fff; }
+    .analog .jam, .analog .menit { stroke: #fff; stroke-linecap: round; }
+    .analog .jam { stroke-width: 5; }
+    .analog .menit { stroke-width: 3.5; }
+    .analog .detik { stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; transition: stroke 1s; }
+    .analog .pusat { fill: var(--accent); transition: fill 1s; }
+
+    /* ===== PERENCANA ===== */
+    .rencana-baris { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .rencana-baris input[type=time] { padding: 9px 10px; font-size: 16px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.35); outline: none; }
+    .rencana-baris input:focus { border-color: var(--accent); }
+    .hasil { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; }
+    .hasil div { background: rgba(255,255,255,0.07); border-left: 4px solid var(--kw, #fff); padding: 8px 10px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+    .hasil div b { font-family: 'Anton', Impact, sans-serif; letter-spacing: 1px; font-weight: 400; }
+    .hasil div span { opacity: 0.7; font-size: 12px; white-space: nowrap; }
+    .catatan { margin-top: 12px; font-size: 11px; opacity: 0.6; line-height: 1.6; }
+    footer { position: relative; z-index: 1; text-align: center; padding: 10px 0 30px; font-size: 12px; letter-spacing: 2px; opacity: 0.7; }
+
+    @media (max-width: 640px) {
+      .wrap { padding: 22px 10px 20px; }
+      .utama { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .utama .analog { width: 170px; height: 170px; align-self: center; }
+      .kontrol .grup.tambah { flex: 1; width: 100%; }
+      .kontrol .grup.tambah select { flex: 1; max-width: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { .spark { animation: none; } }
+  </style>
+</head>
+<body>
+  <div id="scene"></div>
+  <div id="sparks"></div>
+
+  <main class="wrap">
+    <!-- Ganti alamat di bawah kalau portofolio kamu ada di link lain -->
+    <a class="btn kembali" href="https://muqorobin298-lab.github.io/Robin_Dev/">← Kembali</a>
+    <p class="lokasi" id="lokasi"></p>
+    <h1>Jam <span>Dunia</span></h1>
+    <p class="bio">Lihat waktu di banyak kota sekaligus. Klik sebuah kota untuk menjadikannya kota utama, dan latar anime ikut berganti sesuai pagi, siang, sore, atau malam di sana.</p>
+
+    <section class="kartu-besar" aria-label="Kota utama">
+      <div class="utama">
+        <svg class="analog" id="uAnalog" viewBox="0 0 100 100" aria-hidden="true"></svg>
+        <div class="isi">
+          <div class="kota"><span id="uNama"></span><small id="uZona"></small></div>
+          <div class="digit" id="uDigit" aria-live="off"></div>
+          <div class="tgl" id="uTgl"></div>
+          <div id="uTag"></div>
+        </div>
+      </div>
+      <div class="kontrol">
+        <div class="grup">
+          <button class="btn on" id="f24" type="button">24 Jam</button>
+          <button class="btn" id="f12" type="button">12 Jam</button>
+        </div>
+        <div class="grup tambah">
+          <select id="selKota" aria-label="Pilih kota untuk ditambah"></select>
+          <button class="btn main" id="bTambah" type="button">+ Tambah</button>
+        </div>
+        <button class="btn" id="bReset" type="button">Reset Kota</button>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="kartu-besar" style="margin-top:14px" aria-label="Perencana pertemuan">
+      <h2>Perencana Pertemuan</h2>
+      <p class="lbl">Kalau di Jakarta jam berapa?</p>
+      <div class="rencana-baris">
+        <input type="time" id="rJam" value="20:00" aria-label="Jam di Jakarta">
+        <span style="font-size:13px;opacity:.8">WIB (Jakarta), di kota lain jadi:</span>
+      </div>
+      <div class="hasil" id="hasil"></div>
+      <p class="catatan">Waktu dihitung dari data zona waktu di browser, termasuk jam musim panas (DST) di kota yang memakainya. Tidak butuh internet.</p>
+    </section>
+  </main>
+
+  <footer>© ROBIN · DIBUAT DENGAN SEMANGAT SOUL REAPER</footer>
+
+  <script>
+    // ===== TEMA LATAR (sama seperti portofolio) =====
+    const tema = {
+      senja:  { nama: "Senja Karakura", kanji: "代行", g: "linear-gradient(to top,#ff7b3d,#c2410c 40%,#3b1d5e 100%)", orb: "radial-gradient(circle,#fff3c4 0%,#ffd27a 60%,#ff9a3c 100%)", glow: "#ffb347", city: "#1a0a12", accent: "#ff6a00", spark: "#ffcf8a" },
+      malam:  { nama: "Malam Bersalju", kanji: "月", g: "linear-gradient(to top,#2a4a7a,#10234a 50%,#030818 100%)", orb: "radial-gradient(circle,#ffffff 0%,#dbeafe 70%,#a5c8ff 100%)", glow: "#bcd8ff", city: "#050b1a", accent: "#4da6ff", spark: "#d6e8ff" },
+      sakura: { nama: "Hujan Sakura", kanji: "桜", g: "linear-gradient(to top,#ff9ec4,#a8326b 45%,#2a0b2e 100%)", orb: "radial-gradient(circle,#fff0f6 0%,#ffc2da 70%,#ff8fba 100%)", glow: "#ffb3d1", city: "#1f0720", accent: "#ff5c9e", spark: "#ffd0e3" },
+      es:     { nama: "Istana Es", kanji: "氷", g: "linear-gradient(to top,#b8ecff,#2a8fc7 45%,#062a4d 100%)", orb: "radial-gradient(circle,#ffffff 0%,#e0f7ff 70%,#9fe3ff 100%)", glow: "#aeeaff", city: "#04182e", accent: "#38d4ff", spark: "#ffffff" },
+      soul:   { nama: "Soul Society", kanji: "死神", g: "linear-gradient(to top,#3b1d5e,#1a1040 45%,#050510 100%)", orb: "radial-gradient(circle,#fff6dc 0%,#fff1d0 70%,#ffe2a0 100%)", glow: "#fff1d0", city: "#000000", accent: "#a855f7", spark: "#e0c8ff" },
+      bankai: { nama: "BANKAI!", kanji: "卍解", g: "linear-gradient(to top,#ff7b3d,#7a0b1b 45%,#2b0008 100%)", orb: "radial-gradient(circle,#fffbe0 0%,#ffe9b0 60%,#ffd400 100%)", glow: "#ffd400", city: "#1a0004", accent: "#ffd400", spark: "#ffe28a" }
+    };
+    const urutan = Object.keys(tema);
+    const kota = `<svg class="city" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" fill="CITYCOLOR">
+      <rect x="0" y="270" width="1200" height="30"/>
+      <path d="M90 270 V190 H130 V270 Z"/><path d="M70 195 Q110 185 150 195 L135 170 H85 Z"/><path d="M85 170 Q110 160 135 170 L125 150 H95 Z"/><path d="M95 150 L110 125 L125 150 Z"/>
+      <path d="M200 270 V215 H420 V270 Z"/><path d="M180 220 Q310 195 440 220 L410 200 H210 Z"/>
+      <path d="M520 270 V160 H580 V270 Z"/><path d="M495 165 Q550 150 605 165 L585 135 H515 Z"/><path d="M512 135 Q550 120 588 135 L575 108 H525 Z"/><path d="M525 108 Q550 95 575 108 L562 82 H538 Z"/><path d="M540 82 L550 50 L560 82 Z"/>
+      <path d="M680 270 V220 H860 V270 Z"/><path d="M660 225 Q770 200 880 225 L850 205 H690 Z"/>
+      <path d="M930 270 V185 H980 V270 Z"/><path d="M910 190 Q955 178 1000 190 L985 165 H925 Z"/><path d="M925 165 Q955 152 985 165 L975 140 H935 Z"/><path d="M938 140 L955 112 L972 140 Z"/>
+      <path d="M1060 270 V225 H1200 V270 Z"/><path d="M1045 230 Q1130 208 1215 230 L1190 212 H1070 Z"/>
+    </svg>`;
+    const $ = id => document.getElementById(id);
+    const scene = $("scene");
+    const layers = {};
+    urutan.forEach(k => {
+      const t = tema[k];
+      const d = document.createElement("div");
+      d.className = "layer";
+      d.style.background = t.g;
+      d.innerHTML =
+        '<div class="kanji">' + t.kanji + '</div>' +
+        '<div class="orb" style="background:' + t.orb + ';box-shadow:0 0 40px ' + t.glow + ',0 0 110px ' + t.glow + '"></div>' +
+        kota.replace("CITYCOLOR", t.city);
+      scene.appendChild(d);
+      layers[k] = d;
+    });
+    const sparks = $("sparks");
+    for (let n = 0; n < 30; n++) {
+      const s = document.createElement("div");
+      s.className = "spark";
+      const size = 2 + Math.random() * 4;
+      s.style.width = s.style.height = size + "px";
+      s.style.left = Math.random() * 100 + "%";
+      s.style.animationDuration = (6 + Math.random() * 8) + "s";
+      s.style.animationDelay = (Math.random() * 10) + "s";
+      sparks.appendChild(s);
+    }
+    let aktif = "";
+    function gantiTema(k) {
+      if (k === aktif) return;
+      aktif = k;
+      const t = tema[k];
+      urutan.forEach(n => layers[n].classList.toggle("aktif", n === k));
+      document.documentElement.style.setProperty("--accent", t.accent);
+      document.documentElement.style.setProperty("--spark", t.spark);
+      $("lokasi").textContent = "// " + t.nama;
+    }
+
+    // ===== DATA KOTA (nama, zona waktu IANA, singkatan opsional) =====
+    const SEMUA = [
+      ["Jakarta", "Asia/Jakarta", "WIB"], ["Makassar", "Asia/Makassar", "WITA"], ["Jayapura", "Asia/Jayapura", "WIT"],
+      ["Tokyo", "Asia/Tokyo", "JST"], ["Seoul", "Asia/Seoul", "KST"], ["Beijing", "Asia/Shanghai", "CST"], ["Hong Kong", "Asia/Hong_Kong", "HKT"],
+      ["Singapura", "Asia/Singapore", "SGT"], ["Kuala Lumpur", "Asia/Kuala_Lumpur", "MYT"], ["Bangkok", "Asia/Bangkok", "ICT"], ["Manila", "Asia/Manila", "PHT"],
+      ["New Delhi", "Asia/Kolkata", "IST"], ["Dubai", "Asia/Dubai", "GST"], ["Mekkah", "Asia/Riyadh", "AST"], ["Istanbul", "Europe/Istanbul", "TRT"], ["Moskow", "Europe/Moscow", "MSK"],
+      ["London", "Europe/London", ""], ["Paris", "Europe/Paris", ""], ["Berlin", "Europe/Berlin", ""], ["Madrid", "Europe/Madrid", ""], ["Amsterdam", "Europe/Amsterdam", ""],
+      ["Kairo", "Africa/Cairo", ""], ["Lagos", "Africa/Lagos", "WAT"], ["Nairobi", "Africa/Nairobi", "EAT"], ["Johannesburg", "Africa/Johannesburg", "SAST"],
+      ["New York", "America/New_York", ""], ["Chicago", "America/Chicago", ""], ["Denver", "America/Denver", ""], ["Los Angeles", "America/Los_Angeles", ""],
+      ["Toronto", "America/Toronto", ""], ["Mexico City", "America/Mexico_City", ""], ["Sao Paulo", "America/Sao_Paulo", "BRT"], ["Buenos Aires", "America/Argentina/Buenos_Aires", "ART"],
+      ["Sydney", "Australia/Sydney", ""], ["Auckland", "Pacific/Auckland", ""], ["Honolulu", "Pacific/Honolulu", "HST"]
+    ];
+    const KOTA = {};
+    const fmtCache = {};
+    SEMUA.forEach(k => {
+      try {
+        fmtCache[k[1]] = new Intl.DateTimeFormat("en-US", { timeZone: k[1], hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" });
+        KOTA[k[1]] = { nama: k[0], tz: k[1], sing: k[2] };
+      } catch (e) { /* zona waktu tidak dikenal browser, lewati */ }
+    });
+    const DEFAULT = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "Asia/Tokyo", "Asia/Seoul", "Asia/Dubai", "Europe/London", "America/New_York", "Australia/Sydney"].filter(z => KOTA[z]);
+    const WARNA = ["#4da6ff", "#ff5a5a", "#5be37d", "#ffd400", "#c77dff", "#ff9a3c", "#38d4ff", "#ff5c9e"];
+    const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const JKT = "Asia/Jakarta";
+    const MAKS_KOTA = 18;
+
+    const KUNCI = "jamDunia";
+    let daftar = DEFAULT.slice(), utama = DEFAULT[0], pakai24 = true;
+    try {
+      const t = JSON.parse(localStorage.getItem(KUNCI) || "null");
+      if (t && Array.isArray(t.kota)) {
+        const k = t.kota.filter(z => KOTA[z]).slice(0, MAKS_KOTA);
+        if (k.length) { daftar = k; utama = KOTA[t.utama] && k.indexOf(t.utama) !== -1 ? t.utama : k[0]; }
+        pakai24 = t.f24 !== false;
+      }
+    } catch (e) { /* abaikan */ }
+    function simpan() { try { localStorage.setItem(KUNCI, JSON.stringify({ kota: daftar, utama: utama, f24: pakai24 })); } catch (e) { /* abaikan */ } }
+
+    // ===== WAKTU =====
+    const pad = n => String(n).padStart(2, "0");
+    // Waktu lokal sebuah zona pada instan tertentu (ms)
+    function waktuDi(tz, ms) {
+      const o = {};
+      fmtCache[tz].formatToParts(new Date(ms)).forEach(p => { if (p.type !== "literal") o[p.type] = +p.value; });
+      const jam = o.hour % 24;
+      const lokalUTC = Date.UTC(o.year, o.month - 1, o.day, jam, o.minute, o.second);
+      return {
+        y: o.year, m: o.month, d: o.day, jam: jam, mnt: o.minute, dtk: o.second,
+        hari: new Date(Date.UTC(o.year, o.month - 1, o.day)).getUTCDay(),
+        hariNo: Math.floor(Date.UTC(o.year, o.month - 1, o.day) / 86400000),
+        offset: Math.round((lokalUTC - Math.floor(ms / 1000) * 1000) / 60000)
+      };
+    }
+    function teksOffset(menit) {
+      const tanda = menit < 0 ? "-" : "+", a = Math.abs(menit), j = Math.floor(a / 60), m = a % 60;
+      return "UTC" + tanda + j + (m ? ":" + pad(m) : "");
+    }
+    function teksSelisih(menit) {
+      if (menit === 0) return "Sama dengan Jakarta";
+      const a = Math.abs(menit) / 60;
+      const angka = (Number.isInteger(a) ? String(a) : String(a).replace(".", ","));
+      return (menit > 0 ? "+" : "-") + angka + " jam dari Jakarta";
+    }
+    function bagianHari(j) {
+      if (j >= 4 && j < 11) return { n: "Pagi", t: "sakura", ikon: "🌅", siang: true };
+      if (j >= 11 && j < 15) return { n: "Siang", t: "es", ikon: "☀️", siang: true };
+      if (j >= 15 && j < 18) return { n: "Sore", t: "senja", ikon: "🌇", siang: true };
+      if (j >= 18 && j < 22) return { n: "Malam", t: "malam", ikon: "🌙", siang: false };
+      return { n: "Larut malam", t: "soul", ikon: "🌌", siang: false };
+    }
+    function labelHari(selisihHari) { return selisihHari === 0 ? "hari ini" : (selisihHari === 1 ? "besok" : (selisihHari === -1 ? "kemarin" : (selisihHari > 0 ? "+" + selisihHari + " hari" : selisihHari + " hari"))); }
+    function teksJam(w, detik) {
+      let j = w.jam, akhir = "";
+      if (!pakai24) { akhir = j >= 12 ? "PM" : "AM"; j = j % 12 || 12; }
+      return { utama: (pakai24 ? pad(j) : String(j)) + ":" + pad(w.mnt) + (detik ? ":" + pad(w.dtk) : ""), akhir: akhir };
+    }
+    function teksTanggal(w) { return HARI[w.hari] + ", " + w.d + " " + BULAN[w.m - 1] + " " + w.y; }
+
+    // ===== JAM ANALOG =====
+    function bikinAnalog(svg) {
+      let h = '<circle class="muka" cx="50" cy="50" r="47"/>';
+      for (let i = 0; i < 12; i++) {
+        const a = i * 30 * Math.PI / 180, r1 = i % 3 === 0 ? 38 : 42, r2 = 45;
+        h += '<line class="tik' + (i % 3 === 0 ? " besar" : "") + '" x1="' + (50 + Math.sin(a) * r1).toFixed(2) + '" y1="' + (50 - Math.cos(a) * r1).toFixed(2) + '" x2="' + (50 + Math.sin(a) * r2).toFixed(2) + '" y2="' + (50 - Math.cos(a) * r2).toFixed(2) + '"/>';
+      }
+      h += '<line class="jam" x1="50" y1="52" x2="50" y2="28"/><line class="menit" x1="50" y1="54" x2="50" y2="17"/><line class="detik" x1="50" y1="58" x2="50" y2="12"/><circle class="pusat" cx="50" cy="50" r="3"/>';
+      svg.innerHTML = h;
+      return { j: svg.querySelector(".jam"), m: svg.querySelector(".menit"), d: svg.querySelector(".detik") };
+    }
+    function putarJarum(j, w) {
+      j.j.setAttribute("transform", "rotate(" + (((w.jam % 12) + w.mnt / 60) * 30).toFixed(2) + " 50 50)");
+      j.m.setAttribute("transform", "rotate(" + ((w.mnt + w.dtk / 60) * 6).toFixed(2) + " 50 50)");
+      j.d.setAttribute("transform", "rotate(" + (w.dtk * 6) + " 50 50)");
+    }
+    const jarumUtama = bikinAnalog($("uAnalog"));
+
+    // ===== KARTU KOTA =====
+    const kartu = {};
+    function bangunGrid() {
+      const g = $("grid");
+      g.innerHTML = "";
+      Object.keys(kartu).forEach(k => delete kartu[k]);
+      daftar.forEach((tz, i) => {
+        const c = KOTA[tz];
+        const el = document.createElement("div");
+        el.className = "kc"; el.tabIndex = 0; el.setAttribute("role", "button");
+        el.style.setProperty("--kw", WARNA[i % WARNA.length]);
+        el.setAttribute("aria-label", "Jadikan " + c.nama + " kota utama");
+        el.innerHTML = '<svg class="analog" viewBox="0 0 100 100" aria-hidden="true"></svg><div><div class="nm"></div><div class="jm"></div><div class="ket"></div></div><span class="tm"></span>';
+        el.querySelector(".nm").textContent = c.nama;
+        const x = document.createElement("button");
+        x.type = "button"; x.className = "x"; x.textContent = "✕"; x.title = "Hapus kota"; x.setAttribute("aria-label", "Hapus " + c.nama);
+        x.addEventListener("click", e => { e.stopPropagation(); hapusKota(tz); });
+        el.appendChild(x);
+        const pilihKota = () => { utama = tz; simpan(); segarkan(); };
+        el.addEventListener("click", pilihKota);
+        el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pilihKota(); } });
+        g.appendChild(el);
+        kartu[tz] = { el: el, jarum: bikinAnalog(el.querySelector(".analog")), jm: el.querySelector(".jm"), ket: el.querySelector(".ket"), tm: el.querySelector(".tm") };
+      });
+      isiPilihan();
+    }
+    function hapusKota(tz) {
+      if (daftar.length <= 1) return;
+      daftar = daftar.filter(z => z !== tz);
+      if (utama === tz) utama = daftar[0];
+      simpan(); bangunGrid(); segarkan();
+    }
+    function isiPilihan() {
+      const sel = $("selKota");
+      const sisa = SEMUA.filter(k => KOTA[k[1]] && daftar.indexOf(k[1]) === -1);
+      sel.innerHTML = sisa.length ? sisa.map(k => '<option value="' + k[1] + '">' + k[0] + "</option>").join("") : '<option value="">Semua kota sudah ada</option>';
+      $("bTambah").disabled = !sisa.length || daftar.length >= MAKS_KOTA;
+    }
+
+    // ===== PEMBARUAN =====
+    let tUtama = "";
+    function segarkan() {
+      const ms = Date.now();
+      const jkt = waktuDi(JKT, ms);
+      daftar.forEach(tz => {
+        const w = waktuDi(tz, ms), k = kartu[tz], bh = bagianHari(w.jam), tj = teksJam(w, true);
+        k.jm.innerHTML = tj.utama + (tj.akhir ? "<small>" + tj.akhir + "</small>" : "");
+        k.ket.textContent = teksSelisih(w.offset - jkt.offset) + " · " + labelHari(w.hariNo - jkt.hariNo);
+        k.tm.textContent = bh.ikon;
+        k.el.classList.toggle("pilih", tz === utama);
+        putarJarum(k.jarum, w);
+      });
+      // kota utama
+      const w = waktuDi(utama, ms), c = KOTA[utama], bh = bagianHari(w.jam), tj = teksJam(w, true);
+      $("uNama").textContent = c.nama;
+      $("uZona").textContent = (c.sing ? c.sing + " · " : "") + teksOffset(w.offset);
+      $("uDigit").innerHTML = tj.utama + (tj.akhir ? "<small>" + tj.akhir + "</small>" : "");
+      $("uTgl").textContent = teksTanggal(w);
+      const tagBaru = bh.ikon + " " + bh.n + "|" + teksSelisih(w.offset - jkt.offset) + "|" + labelHari(w.hariNo - jkt.hariNo);
+      if (tagBaru !== tUtama) {
+        tUtama = tagBaru;
+        $("uTag").innerHTML = '<span class="tag akt">' + bh.ikon + " " + bh.n + '</span><span class="tag">' + teksSelisih(w.offset - jkt.offset) + '</span><span class="tag">' + labelHari(w.hariNo - jkt.hariNo) + " (dibanding Jakarta)</span>";
+      }
+      putarJarum(jarumUtama, w);
+      gantiTema(bh.t);
+      document.title = tj.utama.slice(0, 5) + (tj.akhir ? " " + tj.akhir : "") + " " + c.nama + " | Jam Dunia Bleach";
+      rencana(ms, jkt);
+    }
+
+    // ===== PERENCANA =====
+    function rencana(ms, jkt) {
+      const v = $("rJam").value;
+      const box = $("hasil");
+      if (!/^\d{2}:\d{2}$/.test(v)) { box.innerHTML = ""; return; }
+      jkt = jkt || waktuDi(JKT, ms);
+      const jam = +v.slice(0, 2), mnt = +v.slice(3);
+      // instan = tanggal Jakarta hari ini + jam yang dipilih, dikurangi offset Jakarta
+      const target = Date.UTC(jkt.y, jkt.m - 1, jkt.d, jam, mnt) - jkt.offset * 60000;
+      const kunci = daftar.join(",") + "|" + v + "|" + pakai24 + "|" + jkt.hariNo + "|" + daftar.map(z => waktuDi(z, target).offset).join(",");
+      if (box.dataset.k === kunci) return;
+      box.dataset.k = kunci;
+      box.innerHTML = "";
+      daftar.forEach((tz, i) => {
+        const w = waktuDi(tz, target), tj = teksJam(w, false);
+        const d = document.createElement("div");
+        d.style.setProperty("--kw", WARNA[i % WARNA.length]);
+        const b = document.createElement("b"); b.textContent = KOTA[tz].nama + " " + tj.utama + (tj.akhir ? " " + tj.akhir : "");
+        const s = document.createElement("span"); s.textContent = labelHari(w.hariNo - jkt.hariNo);
+        d.append(b, s);
+        box.appendChild(d);
+      });
+    }
+
+    // ===== KONTROL =====
+    function setFormat(f24) {
+      pakai24 = f24;
+      $("f24").classList.toggle("on", f24); $("f12").classList.toggle("on", !f24);
+      simpan(); segarkan();
+    }
+    $("f24").addEventListener("click", () => setFormat(true));
+    $("f12").addEventListener("click", () => setFormat(false));
+    $("bTambah").addEventListener("click", () => {
+      const tz = $("selKota").value;
+      if (!tz || !KOTA[tz] || daftar.indexOf(tz) !== -1 || daftar.length >= MAKS_KOTA) return;
+      daftar.push(tz); utama = tz;
+      simpan(); bangunGrid(); segarkan();
+    });
+    $("bReset").addEventListener("click", () => { daftar = DEFAULT.slice(); utama = daftar[0]; simpan(); bangunGrid(); segarkan(); });
+    $("rJam").addEventListener("input", () => segarkan());
+
+    // ===== MULAI (tik tepat di pergantian detik) =====
+    function tik() {
+      segarkan();
+      setTimeout(tik, 1000 - (Date.now() % 1000) + 5);
+    }
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) segarkan(); });
+    $("f24").classList.toggle("on", pakai24); $("f12").classList.toggle("on", !pakai24);
+    bangunGrid();
+    tik();
+  </script>
+</body>
+</html>
